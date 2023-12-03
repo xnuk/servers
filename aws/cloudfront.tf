@@ -296,7 +296,7 @@ resource "aws_cloudfront_distribution" "s" {
     compress        = true
 
     cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
-    response_headers_policy_id = "064181a2-6b87-4b1b-8a02-3241e7e8a622"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.s_xnu_kr.id
     target_origin_id           = aws_s3_bucket.file.bucket_regional_domain_name
     viewer_protocol_policy     = "redirect-to-https"
 
@@ -413,7 +413,7 @@ resource "aws_cloudfront_distribution" "www" {
     cached_methods  = ["GET", "HEAD"]
     compress        = true
 
-    response_headers_policy_id = "c0a907a6-3af3-42b4-8faa-2a7820e9bea9"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.hsts.id
     cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
     target_origin_id           = aws_s3_bucket.www.bucket_regional_domain_name
     viewer_protocol_policy     = "redirect-to-https"
