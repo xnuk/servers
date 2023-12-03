@@ -1,7 +1,31 @@
 import {
   provider = aws.global
+  to       = aws_cloudfront_distribution.kobis
+  id       = "E1IC6SA87SB9X3"
+}
+
+import {
+  provider = aws.global
+  to       = aws_cloudfront_distribution.trunk
+  id       = "E1Z63U4GCWEG98"
+}
+
+import {
+  provider = aws.global
   to       = aws_cloudfront_distribution.file
   id       = "E25NIXAMJCPQR7"
+}
+
+import {
+  provider = aws.global
+  to       = aws_cloudfront_distribution.www
+  id       = "E37T6SZC9QDODL"
+}
+
+import {
+  provider = aws.global
+  to       = aws_cloudfront_distribution.s
+  id       = "EJ5274NY7R80K"
 }
 
 import {
@@ -76,6 +100,25 @@ resource "aws_cloudfront_response_headers_policy" "hsts" {
 ## </ Response header policies > ##
 
 
+## < Access controls > ##
+
+
+resource "aws_cloudfront_origin_access_control" "file" {
+  provider = aws.global
+
+  name        = aws_s3_bucket.file.bucket_regional_domain_name
+  description = ""
+
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+
+## </ Access controls > ##
+
+
+## < Distributions > ##
 
 resource "aws_cloudfront_distribution" "file" {
   provider = aws.global
@@ -112,7 +155,7 @@ resource "aws_cloudfront_distribution" "file" {
   default_cache_behavior {
     allowed_methods = ["GET", "HEAD"]
     cached_methods  = ["GET", "HEAD"]
-    compress        = "true"
+    compress        = true
 
     cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
     response_headers_policy_id = aws_cloudfront_response_headers_policy.s_xnu_kr.id
@@ -133,14 +176,220 @@ resource "aws_cloudfront_distribution" "file" {
   }
 }
 
-resource "aws_cloudfront_origin_access_control" "file" {
+resource "aws_cloudfront_distribution" "kobis" {
   provider = aws.global
+  enabled  = true
 
-  name        = aws_s3_bucket.file.bucket_regional_domain_name
-  description = ""
+  aliases = ["kobis.xnu.kr"]
 
-  origin_access_control_origin_type = "s3"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
+  http_version    = "http2and3"
+  is_ipv6_enabled = true
+
+  default_cache_behavior {
+    allowed_methods = ["GET", "HEAD"]
+    cached_methods  = ["GET", "HEAD"]
+    compress        = true
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.hsts_noreferrer_policy.id
+    target_origin_id           = "kobis.xnu.kr" # TODO
+    viewer_protocol_policy     = "redirect-to-https"
+  }
+
+  ordered_cache_behavior {
+    path_pattern = "/api/theaters/*"
+
+    allowed_methods = ["GET", "HEAD"]
+    cached_methods  = ["GET", "HEAD"]
+    compress        = true
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.hsts_noreferrer_policy.id
+    target_origin_id           = "kobis.xnu.kr"
+    viewer_protocol_policy     = "redirect-to-https"
+  }
+
+  origin {
+    domain_name              = aws_s3_bucket.kobis.bucket_regional_domain_name
+    origin_access_control_id = "EYEPS0STHQ49X" # TODO
+    origin_id                = "kobis.xnu.kr"  # TODO
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn            = aws_acm_certificate.xnu_kr.arn
+    cloudfront_default_certificate = false
+    minimum_protocol_version       = "TLSv1.2_2021"
+    ssl_support_method             = "sni-only"
+  }
 }
 
+resource "aws_cloudfront_distribution" "s" {
+  provider = aws.global
+  aliases  = ["s.xnu.kr"]
+  enabled  = true
+
+  is_ipv6_enabled = true
+  http_version    = "http2"
+  price_class     = "PriceClass_200"
+
+  default_cache_behavior {
+    allowed_methods = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods  = ["GET", "HEAD"]
+    compress        = true
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
+    response_headers_policy_id = "064181a2-6b87-4b1b-8a02-3241e7e8a622"
+    target_origin_id           = aws_s3_bucket.file.bucket_regional_domain_name
+    viewer_protocol_policy     = "redirect-to-https"
+
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = true
+      lambda_arn   = "arn:aws:lambda:us-east-1:734786202020:function:shortener-r1:17"
+    }
+  }
+
+  origin {
+    domain_name = aws_s3_bucket.file.bucket_regional_domain_name
+    origin_id   = aws_s3_bucket.file.bucket_regional_domain_name
+
+    s3_origin_config {
+      origin_access_identity = "origin-access-identity/cloudfront/E2G9C35NHLB4O4"
+    }
+  }
+
+  restrictions {
+    geo_restriction { restriction_type = "none" }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn            = aws_acm_certificate.xnu_kr.arn
+    cloudfront_default_certificate = false
+    minimum_protocol_version       = "TLSv1.2_2021"
+    ssl_support_method             = "sni-only"
+  }
+}
+
+resource "aws_cloudfront_distribution" "trunk" {
+  provider = aws.global
+  aliases  = ["trunk.xnu.kr"]
+  enabled  = true
+
+  http_version    = "http2and3"
+  is_ipv6_enabled = true
+  price_class     = "PriceClass_200"
+
+  default_cache_behavior {
+    allowed_methods = ["GET", "HEAD"]
+    cached_methods  = ["GET", "HEAD"]
+    compress        = true
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.hsts_noreferrer_policy.id
+    target_origin_id           = "trunk.xnu.kr"
+    viewer_protocol_policy     = "https-only"
+  }
+
+  ordered_cache_behavior {
+    path_pattern    = "/gotosocial/*"
+    allowed_methods = ["GET", "HEAD"]
+    cached_methods  = ["GET", "HEAD"]
+    compress        = true
+
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.hsts_noreferrer_policy.id
+    target_origin_id           = "trunk.xnu.kr-gotosocial"
+    viewer_protocol_policy     = "https-only"
+  }
+
+  origin {
+    domain_name              = aws_s3_bucket.trunk-gotosocial.bucket_domain_name # not regional
+    origin_access_control_id = "E2YOVHQ3Q71GA5"
+    origin_id                = "trunk.xnu.kr-gotosocial"
+  }
+
+  origin {
+    domain_name              = aws_s3_bucket.trunk.bucket_domain_name # not regional
+    origin_access_control_id = "E35PJ5XJ6ZHDS3"
+    origin_id                = "trunk.xnu.kr"
+  }
+
+  restrictions {
+    geo_restriction { restriction_type = "none" }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn            = aws_acm_certificate.xnu_kr.arn
+    cloudfront_default_certificate = false
+    minimum_protocol_version       = "TLSv1.2_2021"
+    ssl_support_method             = "sni-only"
+  }
+}
+
+resource "aws_cloudfront_distribution" "www" {
+  provider = aws.global
+  aliases  = ["pride.xnu.kr", "www.xnu.kr", "xnu.kr"]
+  comment  = "www.xnu.kr"
+  enabled  = true
+
+  http_version    = "http2"
+  is_ipv6_enabled = true
+  price_class     = "PriceClass_All"
+
+  custom_error_response {
+    error_caching_min_ttl = 10
+    error_code            = 403
+    response_code         = 404
+    response_page_path    = "/404"
+  }
+
+  custom_error_response {
+    error_caching_min_ttl = 10
+    error_code            = 404
+    response_code         = 404
+    response_page_path    = "/404"
+  }
+
+  default_cache_behavior {
+    allowed_methods = ["GET", "HEAD"]
+    cached_methods  = ["GET", "HEAD"]
+    compress        = true
+
+    response_headers_policy_id = "c0a907a6-3af3-42b4-8faa-2a7820e9bea9"
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
+    target_origin_id           = aws_s3_bucket.www.bucket_regional_domain_name
+    viewer_protocol_policy     = "redirect-to-https"
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = "arn:aws:cloudfront::734786202020:function/rofl-router"
+    }
+  }
+  origin {
+    domain_name = aws_s3_bucket.www.bucket_regional_domain_name
+    origin_id   = aws_s3_bucket.www.bucket_regional_domain_name
+
+    s3_origin_config {
+      origin_access_identity = "origin-access-identity/cloudfront/E2G9C35NHLB4O4"
+    }
+  }
+
+  restrictions {
+    geo_restriction { restriction_type = "none" }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn            = aws_acm_certificate.xnu_kr.arn
+    cloudfront_default_certificate = false
+    minimum_protocol_version       = "TLSv1.2_2021"
+    ssl_support_method             = "sni-only"
+  }
+}
+
+## </ Distributions > ##
