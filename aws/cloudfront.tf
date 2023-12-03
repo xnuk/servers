@@ -14,6 +14,23 @@ data "aws_cloudfront_cache_policy" "caching_optimized" {
   name = "Managed-CachingOptimized"
 }
 
+resource "aws_cloudfront_response_headers_policy" "s_xnu_kr" {
+  name = "s-xnu-kr"
+
+  security_headers_config {
+    referrer_policy {
+      override        = true
+      referrer_policy = "no-referrer"
+    }
+
+    strict_transport_security {
+      access_control_max_age_sec = 94672800
+      include_subdomains         = true
+      override                   = true
+      preload                    = true
+    }
+  }
+}
 
 resource "aws_cloudfront_distribution" "file" {
   provider = aws.global
@@ -53,7 +70,7 @@ resource "aws_cloudfront_distribution" "file" {
     compress        = "true"
 
     cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
-    response_headers_policy_id = "064181a2-6b87-4b1b-8a02-3241e7e8a622"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.s_xnu_kr.id
     target_origin_id           = aws_s3_bucket.file.bucket_regional_domain_name
     viewer_protocol_policy     = "redirect-to-https"
   }
