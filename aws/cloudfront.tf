@@ -34,6 +34,24 @@ import {
   id       = "E2S2O8VGGW4WSM"
 }
 
+import {
+  provider = aws.global
+  to       = aws_cloudfront_origin_access_control.kobis
+  id       = "EYEPS0STHQ49X"
+}
+
+import {
+  provider = aws.global
+  to       = aws_cloudfront_origin_access_control.trunk_gotosocial
+  id       = "E2YOVHQ3Q71GA5"
+}
+
+import {
+  provider = aws.global
+  to       = aws_cloudfront_origin_access_control.trunk
+  id       = "E35PJ5XJ6ZHDS3"
+}
+
 data "aws_cloudfront_cache_policy" "caching_optimized" {
   name = "Managed-CachingOptimized"
 }
@@ -108,6 +126,42 @@ resource "aws_cloudfront_origin_access_control" "file" {
 
   name        = aws_s3_bucket.file.bucket_regional_domain_name
   description = ""
+
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+
+resource "aws_cloudfront_origin_access_control" "kobis" {
+  provider = aws.global
+
+  name        = aws_s3_bucket.kobis.bucket_regional_domain_name
+  description = ""
+
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+
+resource "aws_cloudfront_origin_access_control" "trunk" {
+  provider = aws.global
+
+  name        = "${aws_s3_bucket.trunk.bucket}-s3"
+  description = "Accessing trunk.xnu.kr S3-Cloudfront"
+
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+
+resource "aws_cloudfront_origin_access_control" "trunk_gotosocial" {
+  provider = aws.global
+
+  name        = "${aws_s3_bucket.trunk-gotosocial.bucket}-s3"
+  description = "Accessing trunk.xnu.kr-gotosocial S3-Cloudfront"
 
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -211,14 +265,12 @@ resource "aws_cloudfront_distribution" "kobis" {
 
   origin {
     domain_name              = aws_s3_bucket.kobis.bucket_regional_domain_name
-    origin_access_control_id = "EYEPS0STHQ49X" # TODO
-    origin_id                = "kobis.xnu.kr"  # TODO
+    origin_access_control_id = aws_cloudfront_origin_access_control.kobis.id
+    origin_id                = "kobis.xnu.kr" # TODO
   }
 
   restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
+    geo_restriction { restriction_type = "none" }
   }
 
   viewer_certificate {
@@ -310,13 +362,13 @@ resource "aws_cloudfront_distribution" "trunk" {
 
   origin {
     domain_name              = aws_s3_bucket.trunk-gotosocial.bucket_domain_name # not regional
-    origin_access_control_id = "E2YOVHQ3Q71GA5"
+    origin_access_control_id = aws_cloudfront_origin_access_control.trunk_gotosocial.id
     origin_id                = "trunk.xnu.kr-gotosocial"
   }
 
   origin {
     domain_name              = aws_s3_bucket.trunk.bucket_domain_name # not regional
-    origin_access_control_id = "E35PJ5XJ6ZHDS3"
+    origin_access_control_id = aws_cloudfront_origin_access_control.trunk.id
     origin_id                = "trunk.xnu.kr"
   }
 
