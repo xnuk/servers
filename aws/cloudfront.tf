@@ -4,6 +4,17 @@ import {
   id       = "E25NIXAMJCPQR7"
 }
 
+import {
+  provider = aws.global
+  to       = aws_cloudfront_origin_access_control.file
+  id       = "E2S2O8VGGW4WSM"
+}
+
+data "aws_cloudfront_cache_policy" "caching_optimized" {
+  name = "Managed-CachingOptimized"
+}
+
+
 resource "aws_cloudfront_distribution" "file" {
   provider = aws.global
   enabled  = true
@@ -17,7 +28,7 @@ resource "aws_cloudfront_distribution" "file" {
     domain_name = aws_s3_bucket.file.bucket_regional_domain_name
     origin_id   = aws_s3_bucket.file.bucket_regional_domain_name
 
-    origin_access_control_id = "E2S2O8VGGW4WSM"
+    origin_access_control_id = aws_cloudfront_origin_access_control.file.id
   }
 
   default_root_object = "/404"
@@ -41,7 +52,7 @@ resource "aws_cloudfront_distribution" "file" {
     cached_methods  = ["GET", "HEAD"]
     compress        = "true"
 
-    cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
     response_headers_policy_id = "064181a2-6b87-4b1b-8a02-3241e7e8a622"
     target_origin_id           = aws_s3_bucket.file.bucket_regional_domain_name
     viewer_protocol_policy     = "redirect-to-https"
@@ -59,3 +70,15 @@ resource "aws_cloudfront_distribution" "file" {
     ssl_support_method       = "sni-only"
   }
 }
+
+resource "aws_cloudfront_origin_access_control" "file" {
+  provider = aws.global
+
+  name        = aws_s3_bucket.file.bucket_regional_domain_name
+  description = ""
+
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
