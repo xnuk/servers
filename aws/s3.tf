@@ -33,6 +33,7 @@ locals {
     file = {
       s3         = aws_s3_bucket.file
       cloudfront = aws_cloudfront_distribution.file
+      versioning = true
     }
     kobis = {
       s3         = aws_s3_bucket.kobis
@@ -57,6 +58,26 @@ locals {
 resource "aws_s3_bucket" "file" {
   provider = aws.seoul
   bucket   = "file.xnu.kr"
+}
+
+resource "aws_s3_bucket" "kobis" {
+  provider = aws.seoul
+  bucket   = "kobis.xnu.kr"
+}
+
+resource "aws_s3_bucket" "trunk" {
+  provider = aws.seoul
+  bucket   = "trunk.xnu.kr"
+}
+
+resource "aws_s3_bucket" "trunk-gotosocial" {
+  provider = aws.seoul
+  bucket   = "trunk.xnu.kr-gotosocial"
+}
+
+resource "aws_s3_bucket" "www" {
+  provider = aws.seoul
+  bucket   = "www.xnu.kr"
 }
 
 data "aws_iam_policy_document" "s3-cloudfront-policies" {
@@ -107,23 +128,28 @@ resource "aws_s3_bucket_public_access_block" "make-private" {
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket" "kobis" {
+resource "aws_s3_bucket_versioning" "versionings" {
+  for_each = local.s3-meta
+
+  bucket   = each.value.s3.bucket
   provider = aws.seoul
-  bucket   = "kobis.xnu.kr"
+  versioning_configuration {
+    status = (
+      (
+        contains(keys(each.value), "versioning")
+        ? each.value.versioning : false
+      )
+      ? "Enabled" : "Disabled"
+    )
+  }
 }
 
-resource "aws_s3_bucket" "trunk" {
+resource "aws_s3_bucket_ownership_controls" "ownerships" {
+  for_each = local.s3-meta
+  bucket   = each.value.s3.bucket
   provider = aws.seoul
-  bucket   = "trunk.xnu.kr"
-}
 
-resource "aws_s3_bucket" "trunk-gotosocial" {
-  provider = aws.seoul
-  bucket   = "trunk.xnu.kr-gotosocial"
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
 }
-
-resource "aws_s3_bucket" "www" {
-  provider = aws.seoul
-  bucket   = "www.xnu.kr"
-}
-
