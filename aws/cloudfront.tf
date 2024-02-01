@@ -305,9 +305,10 @@ resource "aws_cloudfront_distribution" "s" {
     domain_name = aws_s3_bucket.file.bucket_regional_domain_name
     origin_id   = aws_s3_bucket.file.bucket_regional_domain_name
 
-    s3_origin_config {
-      origin_access_identity = "origin-access-identity/cloudfront/E2G9C35NHLB4O4"
-    }
+    # This OAC does NOT allow accessing from s.xnu.kr
+    # But, it's okay since s.xnu.kr don't need to access the origin.
+    # Maybe I need to make dedicated /dev/null-like s3 bucket, in near future?
+    origin_access_control_id = aws_cloudfront_origin_access_control.file.id
   }
 
   restrictions {
