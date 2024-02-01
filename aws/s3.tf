@@ -48,8 +48,7 @@ locals {
       cloudfront = aws_cloudfront_distribution.trunk
     }
     www = {
-      s3         = aws_s3_bucket.www
-      cloudfront = aws_cloudfront_distribution.www
+      s3 = aws_s3_bucket.www
     }
   }
 }
@@ -88,13 +87,8 @@ data "aws_iam_policy_document" "s3-cloudfront-policies" {
     effect = "Allow"
 
     principals {
-      # TODO: "www" uses OAI (legacy)
-      type = each.key == "www" ? "AWS" : "Service"
-      identifiers = (
-        each.key == "www"
-        ? ["arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity E2G9C35NHLB4O4"]
-        : ["cloudfront.amazonaws.com"]
-      )
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
     }
 
     actions   = ["s3:GetObject"]
@@ -103,7 +97,10 @@ data "aws_iam_policy_document" "s3-cloudfront-policies" {
     condition {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
-      values   = [each.value.cloudfront.arn]
+      values = (
+        contains(keys(each.value), "cloudfront")
+        ? [each.value.cloudfront.arn] : []
+      )
     }
   }
 }

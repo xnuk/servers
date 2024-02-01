@@ -18,12 +18,6 @@ import {
 
 import {
   provider = aws.global
-  to       = aws_cloudfront_distribution.www
-  id       = "E37T6SZC9QDODL"
-}
-
-import {
-  provider = aws.global
   to       = aws_cloudfront_distribution.s
   id       = "EJ5274NY7R80K"
 }
@@ -370,66 +364,6 @@ resource "aws_cloudfront_distribution" "trunk" {
     domain_name              = aws_s3_bucket.trunk.bucket_domain_name # not regional
     origin_access_control_id = aws_cloudfront_origin_access_control.trunk.id
     origin_id                = "trunk.xnu.kr"
-  }
-
-  restrictions {
-    geo_restriction { restriction_type = "none" }
-  }
-
-  viewer_certificate {
-    acm_certificate_arn            = aws_acm_certificate.xnu_kr.arn
-    cloudfront_default_certificate = false
-    minimum_protocol_version       = "TLSv1.2_2021"
-    ssl_support_method             = "sni-only"
-  }
-}
-
-resource "aws_cloudfront_distribution" "www" {
-  provider = aws.global
-  aliases  = ["pride.xnu.kr", "www.xnu.kr", "xnu.kr"]
-  comment  = "www.xnu.kr"
-  enabled  = true
-
-  http_version    = "http2"
-  is_ipv6_enabled = true
-  price_class     = "PriceClass_All"
-
-  custom_error_response {
-    error_caching_min_ttl = 10
-    error_code            = 403
-    response_code         = 404
-    response_page_path    = "/404"
-  }
-
-  custom_error_response {
-    error_caching_min_ttl = 10
-    error_code            = 404
-    response_code         = 404
-    response_page_path    = "/404"
-  }
-
-  default_cache_behavior {
-    allowed_methods = ["GET", "HEAD"]
-    cached_methods  = ["GET", "HEAD"]
-    compress        = true
-
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.hsts.id
-    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
-    target_origin_id           = aws_s3_bucket.www.bucket_regional_domain_name
-    viewer_protocol_policy     = "redirect-to-https"
-
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::734786202020:function/rofl-router"
-    }
-  }
-  origin {
-    domain_name = aws_s3_bucket.www.bucket_regional_domain_name
-    origin_id   = aws_s3_bucket.www.bucket_regional_domain_name
-
-    s3_origin_config {
-      origin_access_identity = "origin-access-identity/cloudfront/E2G9C35NHLB4O4"
-    }
   }
 
   restrictions {
