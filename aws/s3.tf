@@ -20,7 +20,6 @@ locals {
   s3-meta = {
     file = {
       s3         = aws_s3_bucket.file
-      cloudfront = aws_cloudfront_distribution.file
       versioning = true
     }
     trunk = {

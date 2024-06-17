@@ -1,11 +1,5 @@
 import {
   provider = aws.global
-  to       = aws_cloudfront_distribution.file
-  id       = "E25NIXAMJCPQR7"
-}
-
-import {
-  provider = aws.global
   to       = aws_cloudfront_distribution.s
   id       = "EJ5274NY7R80K"
 }
@@ -101,62 +95,6 @@ resource "aws_cloudfront_origin_access_control" "file" {
 
 
 ## < Distributions > ##
-
-resource "aws_cloudfront_distribution" "file" {
-  provider = aws.global
-  enabled  = true
-
-  aliases = ["file.xnu.kr"]
-  comment = "file.xnu.kr"
-
-  is_ipv6_enabled = true
-
-  origin {
-    domain_name = aws_s3_bucket.file.bucket_regional_domain_name
-    origin_id   = aws_s3_bucket.file.bucket_regional_domain_name
-
-    origin_access_control_id = aws_cloudfront_origin_access_control.file.id
-  }
-
-  default_root_object = "/404"
-
-  custom_error_response {
-    error_caching_min_ttl = 10
-    error_code            = "403"
-    response_code         = "404"
-    response_page_path    = "/404"
-  }
-
-  custom_error_response {
-    error_caching_min_ttl = 10
-    error_code            = "404"
-    response_code         = "404"
-    response_page_path    = "/404"
-  }
-
-  default_cache_behavior {
-    allowed_methods = ["GET", "HEAD"]
-    cached_methods  = ["GET", "HEAD"]
-    compress        = true
-
-    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.s_xnu_kr.id
-    target_origin_id           = aws_s3_bucket.file.bucket_regional_domain_name
-    viewer_protocol_policy     = "redirect-to-https"
-  }
-
-  restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
-  }
-
-  viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate.xnu_kr.arn
-    minimum_protocol_version = "TLSv1.2_2021"
-    ssl_support_method       = "sni-only"
-  }
-}
 
 resource "aws_cloudfront_distribution" "s" {
   provider = aws.global
