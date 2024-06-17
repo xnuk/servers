@@ -6,26 +6,14 @@ import {
 
 import {
   provider = aws.seoul
-  to       = aws_s3_bucket.kobis
-  id       = "kobis.xnu.kr"
+  to       = aws_s3_bucket.www
+  id       = "www.xnu.kr"
 }
 
 import {
   provider = aws.seoul
   to       = aws_s3_bucket.trunk
   id       = "trunk.xnu.kr"
-}
-
-import {
-  provider = aws.seoul
-  to       = aws_s3_bucket.trunk-gotosocial
-  id       = "trunk.xnu.kr-gotosocial"
-}
-
-import {
-  provider = aws.seoul
-  to       = aws_s3_bucket.www
-  id       = "www.xnu.kr"
 }
 
 locals {
@@ -35,17 +23,8 @@ locals {
       cloudfront = aws_cloudfront_distribution.file
       versioning = true
     }
-    kobis = {
-      s3         = aws_s3_bucket.kobis
-      cloudfront = aws_cloudfront_distribution.kobis
-    }
     trunk = {
-      s3         = aws_s3_bucket.trunk
-      cloudfront = aws_cloudfront_distribution.trunk
-    }
-    trunk-gotosocial = {
-      s3         = aws_s3_bucket.trunk-gotosocial
-      cloudfront = aws_cloudfront_distribution.trunk
+      s3 = aws_s3_bucket.trunk
     }
     www = {
       s3 = aws_s3_bucket.www
@@ -59,24 +38,14 @@ resource "aws_s3_bucket" "file" {
   bucket   = "file.xnu.kr"
 }
 
-resource "aws_s3_bucket" "kobis" {
+resource "aws_s3_bucket" "www" {
   provider = aws.seoul
-  bucket   = "kobis.xnu.kr"
+  bucket   = "www.xnu.kr"
 }
 
 resource "aws_s3_bucket" "trunk" {
   provider = aws.seoul
   bucket   = "trunk.xnu.kr"
-}
-
-resource "aws_s3_bucket" "trunk-gotosocial" {
-  provider = aws.seoul
-  bucket   = "trunk.xnu.kr-gotosocial"
-}
-
-resource "aws_s3_bucket" "www" {
-  provider = aws.seoul
-  bucket   = "www.xnu.kr"
 }
 
 data "aws_iam_policy_document" "s3-cloudfront-policies" {
