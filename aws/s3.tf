@@ -6,12 +6,6 @@ import {
 
 import {
   provider = aws.seoul
-  to       = aws_s3_bucket.www
-  id       = "www.xnu.kr"
-}
-
-import {
-  provider = aws.seoul
   to       = aws_s3_bucket.trunk
   id       = "trunk.xnu.kr"
 }
@@ -25,9 +19,6 @@ locals {
     trunk = {
       s3 = aws_s3_bucket.trunk
     }
-    www = {
-      s3 = aws_s3_bucket.www
-    }
   }
 }
 
@@ -35,11 +26,6 @@ locals {
 resource "aws_s3_bucket" "file" {
   provider = aws.seoul
   bucket   = "file.xnu.kr"
-}
-
-resource "aws_s3_bucket" "www" {
-  provider = aws.seoul
-  bucket   = "www.xnu.kr"
 }
 
 resource "aws_s3_bucket" "trunk" {
